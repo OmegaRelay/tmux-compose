@@ -70,7 +70,7 @@ func shell(format string, args ...interface{}) {
 }
 
 func shellInDir(dir, cmd string) {
-	shell("cd %s;%s", coalesce(dir, "."), cmd)
+	shell("cd \"%s\";%s", coalesce(dir, "."), cmd)
 }
 
 func NewWindow(session *Session, window *Window, dir string) {
@@ -79,19 +79,19 @@ func NewWindow(session *Session, window *Window, dir string) {
 		namedWindow = fmt.Sprintf(`-n "%s"`, window.Name)
 	}
 	if session.started {
-		shell("tmux new-window -d -t %s %s -c %s", session.Name, namedWindow, dir)
+		shell("tmux new-window -d -t \"%s\" \"%s\" -c %s", session.Name, namedWindow, dir)
 	} else {
-		shell("tmux new-session -d -s %s %s -c %s", session.Name, namedWindow, dir)
+		shell("tmux new-session -d -s \"%s\" \"%s\" -c %s", session.Name, namedWindow, dir)
 		session.started = true
 	}
 }
 
 func NewPane(target, dir string) {
-	shell("tmux split-window -t %s -c %s", target, dir)
+	shell("tmux split-window -t \"%s\" -c %s", target, dir)
 }
 
 func SelectWindow(target string) {
-	shell("tmux select-window -t %s", target)
+	shell("tmux select-window -t \"%s\"", target)
 }
 
 func SelectLayout(target, layout string) {
@@ -107,23 +107,23 @@ func SelectLayout(target, layout string) {
 	default:
 		log.Fatal("Bad layout: " + layout)
 	}
-	shell("tmux select-layout -t %s %s", target, layout)
+	shell("tmux select-layout -t \"%s\" \"%s\"", target, layout)
 }
 
 func SendLine(target, text string) {
 	if text == "" {
 		return
 	}
-	shell("tmux send-keys -t %s '%s'", target, text)
-	shell("tmux send-keys -R -t %s 'Enter'", target)
+	shell("tmux send-keys -t \"%s\" '%s'", target, text)
+	shell("tmux send-keys -R -t \"%s\" 'Enter'", target)
 }
 
 func KillSession(session string) {
-	run("tmux kill-session -t %s", session)
+	run("tmux kill-session -t \"%s\"", session)
 }
 
 func SetEnvironment(session, key, value string) {
-	shell("tmux set-environment -t %s %s %s", session, key, value)
+	shell("tmux set-environment -t \"%s\" \"%s\" \"%s\"", session, key, value)
 }
 
 func coalesce(args ...string) string {
