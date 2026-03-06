@@ -12,6 +12,7 @@ import (
 // A pane without a readycheck is always ready.
 
 type Object struct {
+	Path       string `yaml:"-"`
 	Name       string
 	ReadyCheck struct {
 		Test     string
@@ -24,7 +25,7 @@ type Object struct {
 }
 
 var allRunners []Runner
-var byName = make(map[string]Runner)
+var byPath = make(map[string]Runner)
 
 type Runner interface {
 	GetObject() *Object
@@ -40,8 +41,8 @@ func (o *Object) GetObject() *Object {
 }
 
 func (o *Object) DependenciesReady() bool {
-	for _, name := range o.DependsOn {
-		other := byName[name]
+	for _, path := range o.DependsOn {
+		other := byPath[path]
 		if !other.IsReady() {
 			return false
 		}
@@ -65,20 +66,20 @@ func (o *Object) MarkReady() {
 func addRunner(r Runner) {
 	allRunners = append(allRunners, r)
 
-	name := r.GetObject().Name
-	if name == "" {
+	path := r.GetObject().Path
+	if path == "" {
 		return
 	}
-	if _, ok := byName[name]; ok {
-		log.Fatalf("Duplicate name: '%s'", name)
+	if runner, ok := byPath[path]; ok {
+		log.Fatalf("Duplicate path: '%s' %v %v", path, runner, byPath)
 	}
-	byName[name] = r
+	byPath[path] = r
 }
 
 func (o *Object) Validate() {
-	for _, name := range o.DependsOn {
-		if _, ok := byName[name]; !ok {
-			log.Fatalf("Dependency does not exist: %s", name)
+	for _, path := range o.DependsOn {
+		if _, ok := byPath[path]; !ok {
+			log.Fatalf("Dependency does not exist: %s", path)
 		}
 	}
 }

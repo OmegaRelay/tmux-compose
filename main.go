@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -354,6 +356,38 @@ func (project *Project) restart() {
 	runAll()
 }
 
+func (project *Project) attach() {
+	args := []string{}
+	if project.Server != "" {
+		args = append(args, "-L", project.Server)
+	}
+	args = append(args, "attach")
+
+	binary, err := exec.LookPath("tmux")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cmd := exec.Command(binary, args...)
+	log.Printf("%s", strings.Join(cmd.Args, " "))
+	err = syscall.Exec(binary, cmd.Args, os.Environ())
+	if err != nil {
+		log.Fatalf("could not exec command: %v", err)
+	}
+}
+
+func (p *Project) genPaths() {
+	for si, s := range p.Sessions {
+		s.Path = strconv.FormatInt(int64(si), 10)
+		for wi, w := range s.Windows {
+			w.Path = filepath.Join(s.Path, strconv.FormatInt(int64(wi), 10))
+			for pi, p := range w.Panes {
+				p.Path = filepath.Join(w.Path, strconv.FormatInt(int64(pi), 10))
+			}
+		}
+	}
+}
+
 func getDefaultShell() string {
 	sh := os.Getenv("SHELL")
 
@@ -390,6 +424,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	project.genPaths()
 
 	action := flag.Arg(0)
 
