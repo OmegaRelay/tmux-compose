@@ -232,7 +232,7 @@ func (project *Project) up() {
 			if w == nil {
 				continue
 			}
-			target := fmt.Sprintf("%s:%d", s.Name, wi)
+			target := fmt.Sprintf("%s:+%d", s.Name, wi)
 			dir := project.getDir(s, w, 0)
 
 			NewWindow(s, w, dir)
@@ -241,7 +241,7 @@ func (project *Project) up() {
 				if p == nil {
 					continue
 				}
-				p.target = fmt.Sprintf("%s:%d.%d", s.Name, wi, pi)
+				p.target = fmt.Sprintf("%s:+%d.+%d", s.Name, wi, pi)
 				dir := project.getDir(s, w, pi)
 				if pi > 0 {
 					NewPane(target, dir)
@@ -259,7 +259,7 @@ func (project *Project) up() {
 				continue
 			}
 			if w.Focus {
-				target := fmt.Sprintf("%s:%d", s.Name, wi)
+				target := fmt.Sprintf("%s:+%d", s.Name, wi)
 				SelectWindow(target)
 			}
 		}
@@ -316,7 +316,7 @@ func (project *Project) restart() {
 				if p == nil {
 					continue
 				}
-				p.target = fmt.Sprintf("%s:%d.%d", s.Name, wi, pi)
+				p.target = fmt.Sprintf("%s:+%d.+%d", s.Name, wi, pi)
 
 				if p.KillCmd != "" {
 					SendLine(p.target, p.KillCmd)
