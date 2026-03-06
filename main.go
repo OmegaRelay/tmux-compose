@@ -75,7 +75,7 @@ func shellInDir(dir, cmd string) {
 
 func NewWindow(session *Session, window *Window, dir string) {
 	var namedWindow string
-	if(len(window.Name) > 0) {
+	if len(window.Name) > 0 {
 		namedWindow = fmt.Sprintf(`-n "%s"`, window.Name)
 	}
 	if session.started {
