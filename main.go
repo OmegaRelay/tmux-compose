@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -44,20 +45,22 @@ type Project struct {
 	UpPostCmd   string `yaml:"up_post_cmd"`
 	DownPreCmd  string `yaml:"down_pre_cmd"`
 	DownPostCmd string `yaml:"down_post_cmd"`
+	Server      string
 	Sessions    []*Session
 }
 
 var gShellArgs []string
 var gRestart bool
+var gTmuxArgs string
 
 func run(format string, args ...interface{}) error {
 	cmdStr := fmt.Sprintf(format, args...)
 	cmd := exec.Command(gShellArgs[0], append(gShellArgs[1:], cmdStr)...)
 
 	fmt.Println(cmdStr)
-	_, err := cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("%s (%w)", out, err)
 	}
 
 	return nil
@@ -80,19 +83,19 @@ func NewWindow(session *Session, window *Window, dir string) {
 		namedWindow = fmt.Sprintf(`-n "%s"`, window.Name)
 	}
 	if session.started {
-		shell("tmux new-window -d -t \"%s\" \"%s\" -c %s", session.Name, namedWindow, dir)
+		shell("tmux %s new-window -d -t \"%s\" \"%s\" -c %s", gTmuxArgs, session.Name, namedWindow, dir)
 	} else {
-		shell("tmux new-session -d -s \"%s\" \"%s\" -c %s", session.Name, namedWindow, dir)
+		shell("tmux %s new-session -d -s \"%s\" \"%s\" -c %s", gTmuxArgs, session.Name, namedWindow, dir)
 		session.started = true
 	}
 }
 
 func NewPane(target, dir string) {
-	shell("tmux split-window -t \"%s\" -c %s", target, dir)
+	shell("tmux %s split-window -t \"%s\" -c %s", gTmuxArgs, target, dir)
 }
 
 func SelectWindow(target string) {
-	shell("tmux select-window -t \"%s\"", target)
+	shell("tmux %s select-window -t \"%s\"", gTmuxArgs, target)
 }
 
 func SelectLayout(target, layout string) {
@@ -108,23 +111,23 @@ func SelectLayout(target, layout string) {
 	default:
 		log.Fatal("Bad layout: " + layout)
 	}
-	shell("tmux select-layout -t \"%s\" \"%s\"", target, layout)
+	shell("tmux %s select-layout -t \"%s\" \"%s\"", gTmuxArgs, target, layout)
 }
 
 func SendLine(target, text string) {
 	if text == "" {
 		return
 	}
-	shell("tmux send-keys -t \"%s\" '%s'", target, text)
-	shell("tmux send-keys -R -t \"%s\" 'Enter'", target)
+	shell("tmux %s send-keys -t \"%s\" '%s'", gTmuxArgs, target, text)
+	shell("tmux %s send-keys -R -t \"%s\" 'Enter'", gTmuxArgs, target)
 }
 
 func KillSession(session string) {
-	run("tmux kill-session -t \"%s\"", session)
+	run("tmux %s kill-session -t \"%s\"", gTmuxArgs, session)
 }
 
 func SetEnvironment(session, key, value string) {
-	shell("tmux set-environment -t \"%s\" \"%s\" \"%s\"", session, key, value)
+	shell("tmux %s set-environment -t \"%s\" \"%s\" \"%s\"", gTmuxArgs, session, key, value)
 }
 
 func coalesce(args ...string) string {
@@ -425,6 +428,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if project.Server != "" {
+		gTmuxArgs = fmt.Sprintf("-L \"%s\"", project.Server)
+	}
+
 	project.genPaths()
 
 	action := flag.Arg(0)
@@ -436,5 +443,7 @@ func main() {
 		project.down()
 	case "restart":
 		project.restart()
+	case "attach":
+		project.attach()
 	}
 }
