@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -377,7 +376,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	data, err := ioutil.ReadFile(composeFile)
+	data, err := os.ReadFile(composeFile)
 	if err != nil {
 		log.Fatal(err)
 	}
