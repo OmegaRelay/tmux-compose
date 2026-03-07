@@ -22,7 +22,7 @@ func main() {
 		Use: filepath.Base(os.Args[0]),
 	}
 
-	cmd.PersistentFlags().StringP("file", "f", "tmux-compose.yml", "Specify an alternate compose file")
+	cmd.PersistentFlags().StringP("file", "f", "", "Specify an alternate compose file, if not set will search in local and system config directories")
 	cmd.PersistentFlags().String("shell", getDefaultShell(), "Specify an alternate shell path")
 
 	cmd.AddCommand(NewUpCommand())

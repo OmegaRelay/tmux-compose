@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -391,12 +392,65 @@ func (p *Project) genPaths() {
 	}
 }
 
+func getDefaultComposeFile() (string, error) {
+	files := []string{
+		"tmux-compose.yml",
+		"tmux-compose.yaml",
+	}
+
+	var localConfigDir, systemConfigDir string
+	if runtime.GOOS == "windows" {
+		localConfigDir = os.Getenv("APPDATA")
+		systemConfigDir = os.Getenv("PROGRAMDATA")
+	} else {
+		localConfigDir = os.Getenv("XDG_CONFIG_HOME")
+		if localConfigDir == "" {
+			localConfigDir = filepath.Join(os.Getenv("HOME"), ".config")
+		}
+		systemConfigDir = strings.Split(os.Getenv("XDG_CONFIG_DIRS"), ":")[0]
+		if systemConfigDir == "" {
+			systemConfigDir = "/etc"
+		}
+	}
+
+	dirs := []string{
+		"",
+		filepath.Join(localConfigDir, "tmux-compose"),
+		filepath.Join(systemConfigDir, "tmux-compose"),
+	}
+
+	for _, dir := range dirs {
+		for _, file := range files {
+			name := filepath.Join(dir, file)
+			_, err := os.Stat(name)
+			if err == nil {
+				return name, nil
+			}
+			if !os.IsNotExist(err) {
+				return "", err
+			}
+		}
+	}
+	return "", fmt.Errorf("no compose file found found in the following paths: %q", dirs)
+}
+
 func initCmd(cmd *cobra.Command, _ []string) *Project {
 	shellArgs := cmd.Flag("shell").Value.String()
-	composeFile := cmd.Flag("file").Value.String()
-
 	fmt.Printf("Using shell args: %s\n", shellArgs)
 	gShellArgs = strings.Split(shellArgs, " ")
+
+	fileFlag := cmd.Flag("file")
+	var err error
+	var composeFile string
+	if fileFlag.Changed {
+		composeFile = fileFlag.Value.String()
+	} else {
+		composeFile, err = getDefaultComposeFile()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("using file: %s\n", composeFile)
+	}
 
 	data, err := os.ReadFile(composeFile)
 	if err != nil {
@@ -404,7 +458,6 @@ func initCmd(cmd *cobra.Command, _ []string) *Project {
 	}
 
 	var project Project
-
 	err = yaml.UnmarshalStrict(data, &project)
 	if err != nil {
 		log.Fatal(err)
