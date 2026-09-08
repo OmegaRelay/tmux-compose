@@ -7,6 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Build data to be overwritten by linker
+var (
+	version = ""
+	commit  = ""
+	date    = ""
+)
+
 func getDefaultShell() string {
 	sh := os.Getenv("SHELL")
 
@@ -19,7 +26,8 @@ func getDefaultShell() string {
 
 func main() {
 	cmd := cobra.Command{
-		Use: filepath.Base(os.Args[0]),
+		Use:     filepath.Base(os.Args[0]),
+		Version: version,
 	}
 
 	cmd.PersistentFlags().StringP("file", "f", "", "Specify an alternate compose file, if not set will search in local and system config directories")

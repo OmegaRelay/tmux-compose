@@ -1,0 +1,77 @@
+version: 2
+
+## Building ##
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch: 
+      - amd64
+      - '386'
+      - arm64
+      - arm
+      - riscv64
+    goarm:
+      - '6'
+      - '7'
+    ignore:
+      - goos: windows
+        goarm: '6'
+
+checksum:
+  name_template: 'checksums.txt'
+
+## Archiving ##
+
+archives:
+  - format_overrides:
+      - goos: windows
+        formats: [zip]
+
+## Releasing ##
+
+sboms:
+  - disable: false 
+
+report_sizes: true
+
+changelog:
+  groups:
+    - title: 'New Features'
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: 'Documentation updates'
+      regexp: "^.*docs[(\\w)]*:+.*$"
+      order: 2
+    - title: 'Other'
+      order: 999
+
+release:
+  prerelease: auto
+  mode: append
+
+## Publishing ##
+
+homebrew_casks:
+  - name: tmux-compose 
+    skip_upload: true
+    generate_completions_from_executable:
+      args:
+        - completion
+      shell_parameter_format: cobra
+      shells:
+        - bash
+        - zsh
+        - fish
+        - pwsh
