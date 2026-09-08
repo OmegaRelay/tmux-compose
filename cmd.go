@@ -54,8 +54,11 @@ var gShellArgs []string
 var gRestart bool
 var gTmuxArgs string
 
-func shellRun(format string, args ...interface{}) error {
-	cmdStr := fmt.Sprintf(format, args...)
+func shellRunf(format string, args ...interface{}) error {
+	return shellRun(fmt.Sprintf(format, args...))
+}
+
+func shellRun(cmdStr string) error {
 	cmd := exec.Command(gShellArgs[0], append(gShellArgs[1:], cmdStr)...)
 
 	fmt.Println(cmdStr)
@@ -68,7 +71,7 @@ func shellRun(format string, args ...interface{}) error {
 }
 
 func shell(format string, args ...interface{}) {
-	err := shellRun(format, args...)
+	err := shellRunf(format, args...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -124,7 +127,7 @@ func SendLine(target, text string) {
 }
 
 func KillSession(session string) {
-	shellRun("tmux %s kill-session -t \"%s\"", gTmuxArgs, session)
+	shellRunf("tmux %s kill-session -t \"%s\"", gTmuxArgs, session)
 }
 
 func SetEnvironment(session, key, value string) {
