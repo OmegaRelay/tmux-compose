@@ -270,16 +270,19 @@ func (project *Project) up() {
 		if s == nil {
 			continue
 		}
+		log.Printf("adding session runner %s", s.Path)
 		addRunner(s)
 		for _, w := range s.Windows {
 			if w == nil {
 				continue
 			}
+			log.Printf("adding window runner %s", w.Path)
 			addRunner(w)
 			for _, p := range w.Panes {
 				if p == nil {
 					continue
 				}
+				log.Printf("adding pane runner %s", p.Path)
 				addRunner(p)
 			}
 		}
