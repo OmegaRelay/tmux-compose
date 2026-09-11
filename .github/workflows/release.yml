@@ -15,13 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: anchore/sbom-action/download-syft@4b8c29d790e45fe4e30d1b3ecf75f20d802e5dee
-      - uses: actions/setup-go@v6
+      - name: Set up Go
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+      - name: Install Syft # For SBOM generation
+        uses: anchore/sbom-action/download-syft@4b8c29d790e45fe4e30d1b3ecf75f20d802e5dee
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7
         with:
